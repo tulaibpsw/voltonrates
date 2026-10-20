@@ -224,3 +224,11 @@ export async function clearNotice(): Promise<{ version: number }> {
   await meta.updateOne({ _id: "board" }, { $set: { notice: null } });
   return { version: await bumpVersion() };
 }
+
+/** Delete every product and its price history. Settings and the notice are kept. */
+export async function deleteAllRates(): Promise<{ deleted: number; version: number }> {
+  const { rates, history } = await collections();
+  const res = await rates.deleteMany({});
+  await history.deleteMany({});
+  return { deleted: res.deletedCount, version: await bumpVersion() };
+}

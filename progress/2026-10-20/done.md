@@ -31,3 +31,14 @@
 - Checked: notice API (bad link 400, no login 401, Cloudinary missing 503), text notice showed and closed
   by itself after 1 min, picture notice showed until removed, removal cleared screens. 13 unit tests pass.
 - Not checked yet: a real video upload (needs Cloudinary keys) and installing on a real iPhone.
+
+## Cloudinary keys, delete all, one-category layout
+- Cloudinary keys copied from volton-crm/.env.local (local only, not committed). Tested a real signed upload
+  into `volton/rates-notices` and deleted the test file. **Add the same 3 keys in Vercel.**
+- Admin Rates tab: "Hide category from screen / Show category on screen" per category (e.g. show only Solar),
+  and "Delete all N items…" (type DELETE ALL; API also requires `{confirm:"DELETE ALL"}`).
+- Board fills the screen: one category takes the full width; a long single category splits into two columns;
+  few items get bigger text, measured to fit the actual TV (no overflow), never smaller than normal.
+- Fixed: items shown again after hiding no longer glow "Just updated".
+- Checked: solar-only fits 1280×720 at 1.5× text, 4 categories fit at normal size; delete-all without confirm 400,
+  without login 401. 16 unit tests pass. Not run: the real delete-all success path (would wipe local test data).

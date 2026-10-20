@@ -32,3 +32,33 @@ export function groupByCategory(rates: Rate[], order: string[]): { category: str
   const rest = [...map.keys()].filter((c) => !order.includes(c)).sort();
   return [...known, ...rest].map((category) => ({ category, rates: map.get(category)! }));
 }
+
+export interface BoardLayout {
+  /** Category boxes side by side (TV width). One category gets the full width. */
+  columns: 1 | 2;
+  /** One category with many items: split its rows into two columns inside the box. */
+  splitRows: boolean;
+  /** Text/row size multiplier. Few items → bigger text, so the screen is filled and readable from far. */
+  scale: number;
+}
+
+const ROWS_THAT_FIT = 10; // about this many rows fit a 1080p screen at scale 1
+
+/** Decide how to use the screen for the given categories. */
+export function boardLayout(groups: { rates: unknown[] }[]): BoardLayout {
+  if (groups.length === 0) return { columns: 1, splitRows: false, scale: 1 };
+  if (groups.length === 1) {
+    const n = groups[0].rates.length;
+    const splitRows = n > 7;
+    const perColumn = (splitRows ? Math.ceil(n / 2) : n) + 1; // + the category header
+    return { columns: 1, splitRows, scale: clampScale(ROWS_THAT_FIT / perColumn) };
+  }
+  // Boxes fill the grid row by row: 1st left, 2nd right, 3rd left...
+  const height = [0, 0];
+  groups.forEach((g, i) => (height[i % 2] += g.rates.length + 1.2));
+  return { columns: 2, splitRows: false, scale: clampScale(ROWS_THAT_FIT / Math.max(...height)) };
+}
+
+function clampScale(s: number): number {
+  return Math.round(Math.min(1.9, Math.max(1, s)) * 100) / 100;
+}

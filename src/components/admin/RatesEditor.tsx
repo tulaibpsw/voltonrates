@@ -85,8 +85,38 @@ export function RatesEditor({ board, onChanged, onError, onSaved }: Props) {
     }
   }
 
+  /** Hide or show a whole category on the screen (e.g. show only Solar Panels). */
+  async function setCategoryVisible(category: string, active: boolean) {
+    const targets = board.rates.filter((r) => r.category === category && r.active !== active);
+    if (targets.length === 0) return;
+    setBusy(true);
+    try {
+      for (const r of targets) await api(`/api/admin/rates/${r.id}`, { method: "PATCH", body: { active } });
+      onSaved(active ? `${category} is on the screen.` : `${category} is hidden from the screen.`);
+      await onChanged();
+    } catch (err) {
+      onError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteAll() {
+    setBusy(true);
+    try {
+      const res = await api<{ deleted: number }>("/api/admin/rates", { method: "DELETE", body: { confirm: "DELETE ALL" } });
+      setDrafts({});
+      onSaved(`All ${res.deleted} items deleted.`);
+      await onChanged();
+    } catch (err) {
+      onError(err);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (board.rates.length === 0) {
-    return <p className="rounded-2xl bg-surface p-6 text-fg-soft">No items yet. Open the “Add item” tab to add the first one.</p>;
+    return <p className="rounded-2xl bg-surface p-6 text-fg-soft">No items yet. Open the “Add” tab to add the first one.</p>;
   }
 
   return (
@@ -100,7 +130,18 @@ export function RatesEditor({ board, onChanged, onError, onSaved }: Props) {
       />
       {groups.map((g) => (
         <section key={g.category}>
-          <h2 className="mb-2 font-display text-lg font-extrabold">{g.category}</h2>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="font-display text-lg font-extrabold">{g.category}</h2>
+            {g.rates.some((r) => r.active) ? (
+              <button className="btn-chip text-sm" disabled={busy} onClick={() => void setCategoryVisible(g.category, false)}>
+                Hide category from screen
+              </button>
+            ) : (
+              <button className="btn-chip text-sm" disabled={busy} onClick={() => void setCategoryVisible(g.category, true)}>
+                Show category on screen
+              </button>
+            )}
+          </div>
           <ul className="space-y-3">
             {g.rates.map((r) =>
               editing === r.id ? (
@@ -137,6 +178,8 @@ export function RatesEditor({ board, onChanged, onError, onSaved }: Props) {
         </section>
       ))}
 
+      <DeleteAll count={board.rates.length} busy={busy} onConfirm={() => void deleteAll()} />
+
       {dirtyIds.length > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-edge bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-brand">
           <div className="mx-auto flex max-w-3xl gap-2">
@@ -149,6 +192,38 @@ export function RatesEditor({ board, onChanged, onError, onSaved }: Props) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Two steps so it can't happen by a slip of the thumb: open, then type DELETE ALL. */
+function DeleteAll({ count, busy, onConfirm }: { count: number; busy: boolean; onConfirm: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState("");
+  if (!open) {
+    return (
+      <button className="btn-chip mt-6 w-full text-down" disabled={busy} onClick={() => setOpen(true)}>
+        Delete all {count} items…
+      </button>
+    );
+  }
+  return (
+    <div className="mt-6 space-y-3 rounded-2xl border-2 border-down bg-down-soft p-4">
+      <p className="font-display font-extrabold text-down">Delete all {count} items and their price history?</p>
+      <p className="text-sm">This cannot be undone. Screen settings and notices are kept. Type <b>DELETE ALL</b> to confirm.</p>
+      <input className="input" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="DELETE ALL" autoCapitalize="characters" aria-label="Type DELETE ALL to confirm" />
+      <div className="flex gap-2">
+        <button className="btn-ghost-dark min-h-14 flex-1" onClick={() => { setOpen(false); setTyped(""); }}>
+          Cancel
+        </button>
+        <button
+          className="min-h-14 flex-[2] rounded-xl bg-down font-display font-extrabold text-white disabled:opacity-40"
+          disabled={busy || typed.trim().toUpperCase() !== "DELETE ALL"}
+          onClick={onConfirm}
+        >
+          Delete everything
+        </button>
+      </div>
     </div>
   );
 }

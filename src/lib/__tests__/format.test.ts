@@ -36,3 +36,17 @@ describe("resolveTheme", () => {
     expect(resolveTheme("day", new Date(2026, 0, 1, 23, 0))).toBe("day");
   });
 });
+
+import { boardLayout } from "../format";
+const g = (n: number) => ({ rates: Array.from({ length: n }) });
+describe("boardLayout", () => {
+  it("one category takes the full width and gets bigger text", () => {
+    expect(boardLayout([g(5)])).toEqual({ columns: 1, splitRows: false, scale: 1.67 });
+  });
+  it("one long category splits its rows into two columns", () => {
+    expect(boardLayout([g(14)])).toMatchObject({ columns: 1, splitRows: true });
+  });
+  it("many categories sit side by side at normal size", () => {
+    expect(boardLayout([g(6), g(3), g(2), g(2)])).toEqual({ columns: 2, splitRows: false, scale: 1 });
+  });
+});

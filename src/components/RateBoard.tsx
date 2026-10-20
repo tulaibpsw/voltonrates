@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { formatPrice, groupByCategory, priceChange, timeAgo } from "@/lib/format";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { boardLayout, formatPrice, groupByCategory, priceChange, timeAgo } from "@/lib/format";
 import { parseThemeMode, resolveTheme } from "@/lib/theme";
 import { UNIT_LABEL, type Rate, type ThemeMode } from "@/lib/types";
 import { BrandLogo } from "./BrandLogo";
@@ -30,6 +30,8 @@ export function RateBoard() {
     () => (board ? groupByCategory(board.rates, board.settings.categoryOrder) : []),
     [board],
   );
+  const layout = useMemo(() => boardLayout(groups), [groups]);
+  useFitScale(scrollRef, layout.scale, board?.version);
   const lastChange = useMemo(() => {
     const times = (board?.rates ?? []).map((r) => r.priceChangedAt ?? r.updatedAt).sort();
     return times.at(-1) ?? null;
@@ -66,18 +68,27 @@ export function RateBoard() {
         </div>
       </header>
 
-      <main ref={scrollRef} className="flex-1 overflow-hidden px-[3vw] py-[2vh]">
+      <main
+        ref={scrollRef}
+        className="flex-1 overflow-hidden px-[3vw] py-[2vh]"
+      >
         {!board && !error && <CenterNote text="Loading rates..." />}
         {!board && error && <CenterNote text={error} />}
         {board && groups.length === 0 && <CenterNote text="No rates yet. The admin can add them from /admin." />}
-        <div className="grid gap-[2vh] lg:grid-cols-2 lg:gap-x-[2vw]">
+        <div className={`grid gap-[2vh] lg:gap-x-[2vw] ${layout.columns === 2 ? "lg:grid-cols-2" : ""}`}>
           {groups.map((g) => (
             <section key={g.category} className="overflow-hidden rounded-2xl border border-edge bg-surface shadow-brand">
-              <h2 className="flex items-center justify-between bg-gold px-[1.4vw] py-[0.9vh] font-display text-[clamp(1.05rem,1.5vw,2.2rem)] font-extrabold text-ink uppercase">
+              <h2 className="flex items-center justify-between bg-gold px-[1.4vw] py-[calc(0.9vh*var(--k,1))] font-display text-[calc(clamp(1.05rem,1.5vw,2.2rem)*var(--k,1))] font-extrabold text-ink uppercase">
                 <span>{g.category}</span>
                 <span className="text-[0.65em] font-bold opacity-70">Rs</span>
               </h2>
-              <ul className="divide-y divide-edge">
+              <ul
+                className={
+                  layout.splitRows
+                    ? "grid lg:grid-cols-2 lg:gap-x-[2vw] [&>li]:border-b [&>li]:border-edge"
+                    : "divide-y divide-edge"
+                }
+              >
                 {g.rates.map((r) => (
                   <RateRow key={r.id} rate={r} flash={flashing.has(r.id)} now={now?.getTime()} />
                 ))}
@@ -111,13 +122,13 @@ function RateRow({ rate, flash, now }: { rate: Rate; flash: boolean; now?: numbe
   const change = priceChange(rate);
   return (
     <li
-      className={`flex items-center justify-between gap-4 px-[1.4vw] py-[1.1vh] ${flash ? "flash" : ""} ${rate.inStock ? "" : "opacity-50"}`}
+      className={`flex items-center justify-between gap-4 px-[1.4vw] py-[calc(1.1vh*var(--k,1))] ${flash ? "flash" : ""} ${rate.inStock ? "" : "opacity-50"}`}
     >
       <div className="min-w-0">
-        <p className="truncate font-display text-[clamp(1rem,1.45vw,2.1rem)] font-bold">
+        <p className="truncate font-display text-[calc(clamp(1rem,1.45vw,2.1rem)*var(--k,1))] font-bold">
           {rate.brand} <span className="font-semibold text-fg-soft">{rate.model}</span>
         </p>
-        <p className="truncate text-[clamp(0.75rem,0.95vw,1.35rem)] text-fg-soft">
+        <p className="truncate text-[calc(clamp(0.75rem,0.95vw,1.35rem)*var(--k,1))] text-fg-soft">
           {[rate.spec, rate.inStock ? null : "Out of stock", flash ? "Just updated" : null]
             .filter(Boolean)
             .join("  •  ") || " "}
@@ -126,8 +137,8 @@ function RateRow({ rate, flash, now }: { rate: Rate; flash: boolean; now?: numbe
       <div className="flex shrink-0 items-center gap-[1vw]">
         {change !== 0 && <ChangeBadge change={change} title={timeAgo(rate.priceChangedAt, now)} />}
         <p className="text-right font-display leading-none tabular-nums">
-          <span className="text-[clamp(1.4rem,2.3vw,3.4rem)] font-extrabold text-price">{formatPrice(rate.price)}</span>
-          <span className="ml-1 text-[clamp(0.7rem,0.9vw,1.3rem)] font-semibold text-fg-soft">
+          <span className="text-[calc(clamp(1.4rem,2.3vw,3.4rem)*var(--k,1))] font-extrabold text-price">{formatPrice(rate.price)}</span>
+          <span className="ml-1 text-[calc(clamp(0.7rem,0.9vw,1.3rem)*var(--k,1))] font-semibold text-fg-soft">
             {UNIT_LABEL[rate.unit]}
           </span>
         </p>
@@ -141,7 +152,7 @@ function ChangeBadge({ change, title }: { change: number; title: string }) {
   return (
     <span
       title={title}
-      className={`rounded-lg px-[0.6vw] py-[0.3vh] text-[clamp(0.8rem,1.05vw,1.5rem)] font-bold tabular-nums ${up ? "bg-up-soft text-up" : "bg-down-soft text-down"}`}
+      className={`rounded-lg px-[0.6vw] py-[0.3vh] text-[calc(clamp(0.8rem,1.05vw,1.5rem)*var(--k,1))] font-bold tabular-nums ${up ? "bg-up-soft text-up" : "bg-down-soft text-down"}`}
     >
       {up ? "▲" : "▼"} {formatPrice(Math.abs(change))}
     </span>
@@ -258,7 +269,8 @@ function useChangedIds(rates: Rate[] | undefined) {
   const [flashing, setFlashing] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (!rates) return;
-    const next = new Map(rates.map((r) => [r.id, r.price]));
+    // Remember every item ever seen (also hidden ones), so an item that is shown again does not glow.
+    const next = new Map([...(prev.current ?? []), ...rates.map((r) => [r.id, r.price] as const)]);
     const before = prev.current;
     prev.current = next;
     if (!before) return; // first load: nothing to highlight
@@ -275,6 +287,30 @@ function useChangedIds(rates: Rate[] | undefined) {
     return () => clearTimeout(t);
   }, [rates]);
   return flashing;
+}
+
+/**
+ * Few items → bigger text. Start from the layout's suggested size, then shrink in small steps
+ * until everything fits this screen (never below normal size; past that, auto-scroll takes over).
+ * Re-runs when the board changes or the window is resized.
+ */
+function useFitScale(ref: React.RefObject<HTMLElement | null>, maxScale: number, version: number | undefined) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      let k = maxScale;
+      el.style.setProperty("--k", String(k));
+      while (k > 1 && el.scrollHeight > el.clientHeight + 1) {
+        k = Math.max(1, Math.round((k - 0.05) * 100) / 100);
+        el.style.setProperty("--k", String(k));
+      }
+    };
+    fit();
+    void document.fonts?.ready.then(fit); // web fonts change text width, so fit again once loaded
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [ref, maxScale, version]);
 }
 
 /** When the list is taller than the screen, scroll slowly down, pause, and jump back to the top. */
