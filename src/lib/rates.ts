@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { ObjectId, type WithId } from "mongodb";
 import { getDb } from "./db";
-import { DEFAULT_CATEGORIES, type BoardPayload, type BoardSettings, type Rate, type Unit } from "./types";
+import { DEFAULT_CATEGORIES, type BoardPayload, type BoardSettings, type Notice, type NoticeKind, type Rate, type Unit } from "./types";
 
 interface RateDoc {
   category: string;
@@ -22,6 +23,17 @@ interface MetaDoc {
   _id: "board";
   version: number;
   settings: BoardSettings;
+  notice?: NoticeDoc | null;
+}
+
+interface NoticeDoc {
+  id: string;
+  kind: NoticeKind;
+  message: string;
+  mediaUrl: string;
+  sound: boolean;
+  startedAt: Date;
+  showUntil: Date | null;
 }
 
 interface HistoryDoc {
@@ -66,6 +78,12 @@ function toRate(d: WithId<RateDoc>): Rate {
   };
 }
 
+/** Only a notice that has not expired yet is sent to screens. */
+function activeNotice(n: NoticeDoc | null | undefined, now: Date): Notice | null {
+  if (!n || (n.showUntil && n.showUntil <= now)) return null;
+  return { ...n, startedAt: n.startedAt.toISOString(), showUntil: n.showUntil ? n.showUntil.toISOString() : null };
+}
+
 function parseId(id: string): ObjectId | null {
   return /^[a-f0-9]{24}$/i.test(id) ? new ObjectId(id) : null;
 }
@@ -94,11 +112,13 @@ export async function getBoard(opts: { includeInactive?: boolean } = {}): Promis
     rates.find(filter).sort({ category: 1, sortOrder: 1, brand: 1, model: 1 }).toArray(),
     getMeta(),
   ]);
+  const now = new Date();
   return {
     rates: docs.map(toRate),
     settings: { ...DEFAULT_SETTINGS, ...meta.settings },
+    notice: activeNotice(meta.notice, now),
     version: meta.version,
-    serverTime: new Date().toISOString(),
+    serverTime: now.toISOString(),
   };
 }
 
@@ -168,4 +188,39 @@ export async function getHistory(id: string, limit = 30) {
 export async function countRates(): Promise<number> {
   const { rates } = await collections();
   return rates.countDocuments();
+}
+
+export interface NoticeInput {
+  kind: NoticeKind;
+  message: string;
+  mediaUrl: string;
+  sound: boolean;
+  durationMinutes: number | null;
+}
+
+/** Show a notice on every screen now. It replaces any notice that is already showing. */
+export async function setNotice(input: NoticeInput): Promise<{ notice: Notice; version: number }> {
+  const { meta } = await collections();
+  const now = new Date();
+  const doc: NoticeDoc = {
+    id: randomUUID(),
+    kind: input.kind,
+    message: input.message,
+    mediaUrl: input.kind === "text" ? "" : input.mediaUrl,
+    sound: input.kind === "video" && input.sound,
+    startedAt: now,
+    showUntil: input.durationMinutes ? new Date(now.getTime() + input.durationMinutes * 60_000) : null,
+  };
+  await meta.updateOne(
+    { _id: "board" },
+    { $set: { notice: doc }, $setOnInsert: { version: 0, settings: DEFAULT_SETTINGS } },
+    { upsert: true },
+  );
+  return { notice: activeNotice(doc, now)!, version: await bumpVersion() };
+}
+
+export async function clearNotice(): Promise<{ version: number }> {
+  const { meta } = await collections();
+  await meta.updateOne({ _id: "board" }, { $set: { notice: null } });
+  return { version: await bumpVersion() };
 }

@@ -21,3 +21,13 @@
 - Admin panel has its own Day/Night button (remembered on the phone, defaults to the phone setting).
 - Favicon + Apple icon: the logo's "O + bolt" mark on a navy tile (`src/app/icon.png`, `favicon.ico`, `apple-icon.png`).
 - Checks: tsc, eslint, build pass; 9 unit tests pass; both themes checked in the browser.
+
+## Notices + PWA
+- Admin "📢 Notice" tab: message / picture / video (+ caption), quick messages, show for 1 min – 1 hour or
+  until removed, "Remove notice now", live countdown. Screens show it full screen and close it on time.
+- Uploads go straight from the phone to Cloudinary (signed, like the CRM), with a progress bar; or paste a link.
+- PWA: manifest (opens /admin, shortcuts), icons, iPhone home-screen support, safe-area padding,
+  service worker with offline page (never caches prices).
+- Checked: notice API (bad link 400, no login 401, Cloudinary missing 503), text notice showed and closed
+  by itself after 1 min, picture notice showed until removed, removal cleared screens. 13 unit tests pass.
+- Not checked yet: a real video upload (needs Cloudinary keys) and installing on a real iPhone.

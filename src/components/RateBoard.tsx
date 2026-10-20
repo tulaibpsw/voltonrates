@@ -5,12 +5,13 @@ import { formatPrice, groupByCategory, priceChange, timeAgo } from "@/lib/format
 import { parseThemeMode, resolveTheme } from "@/lib/theme";
 import { UNIT_LABEL, type Rate, type ThemeMode } from "@/lib/types";
 import { BrandLogo } from "./BrandLogo";
+import { NoticeOverlay } from "./NoticeOverlay";
 import { useLiveBoard, type LiveStatus } from "./useLiveBoard";
 
 const FLASH_MS = 8000;
 
 export function RateBoard() {
-  const { board, status, error } = useLiveBoard();
+  const { board, status, error, clockOffsetMs } = useLiveBoard();
   const now = useNow(1000);
   const flashing = useChangedIds(board?.rates);
   const scrollRef = useAutoScroll();
@@ -18,6 +19,12 @@ export function RateBoard() {
   useWakeLock();
   const screenTheme = useScreenTheme();
   const theme = resolveTheme(screenTheme.mode ?? board?.settings.theme ?? "auto", now);
+
+  // The notice closes itself on time, using the server's clock (the TV clock may be wrong).
+  const notice = board?.notice ?? null;
+  const serverNow = now ? now.getTime() + clockOffsetMs : null;
+  const noticeLeftMs = notice?.showUntil && serverNow !== null ? Date.parse(notice.showUntil) - serverNow : null;
+  const showNotice = notice !== null && (noticeLeftMs === null || noticeLeftMs > 0);
 
   const groups = useMemo(
     () => (board ? groupByCategory(board.rates, board.settings.categoryOrder) : []),
@@ -87,10 +94,12 @@ export function RateBoard() {
         <Ticker text={board?.settings.ticker ?? ""} />
       </footer>
 
+      {showNotice && notice && <NoticeOverlay key={notice.id} notice={notice} remainingMs={noticeLeftMs} />}
+
       <button
         type="button"
         onClick={toggleFullscreen}
-        className={`fixed right-4 bottom-20 rounded-xl bg-gold px-5 py-3 font-bold text-ink shadow-lg transition-opacity ${controlsVisible ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed right-4 bottom-20 z-[60] rounded-xl bg-gold px-5 py-3 font-bold text-ink shadow-lg transition-opacity ${controlsVisible ? "opacity-100" : "pointer-events-none opacity-0"}`}
       >
         Full screen
       </button>

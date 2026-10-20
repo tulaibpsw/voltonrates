@@ -46,3 +46,17 @@ from a phone; every screen showing `/` updates within a second.
   Point `.env.local` `MONGODB_URI` at `mongodb://127.0.0.1:27999` for local work. Never seed the live DB.
 - `npm run dev` (port 3200), `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`.
 - Record each working day in `progress/YYYY-MM-DD/` (`done.md`, `next.md`, `remaining.md`).
+
+## Notices (full-screen alert on every screen)
+- One notice at a time, stored on the `meta` "board" doc (`setNotice` / `clearNotice` in `src/lib/rates.ts`).
+  Kinds: `text`, `image`, `video` (+ optional caption). Ends at `showUntil` or when the admin removes it.
+- `/api/rates` only sends a notice that has not expired. Screens close it on time by themselves using the
+  server clock offset (`clockOffsetMs` from `useLiveBoard`), so no push is needed at expiry.
+- Media: Cloudinary, same as the CRM — the browser uploads straight to Cloudinary with a signature from
+  `POST /api/admin/uploads/sign` (never through Vercel: 4.5 MB body limit). Public files in `volton/rates-notices`.
+  Pasted links must be `https://`.
+
+## PWA
+- `src/app/manifest.ts` (opens `/admin`), icons in `public/icons/`, `src/app/apple-icon.png`, `appleWebApp` in the layout.
+- `public/sw.js` is network-first and never caches `/api/*` (prices must stay live). Bump `CACHE` when changing it.
+- Registered only in production (`RegisterServiceWorker`). Admin UI pads for the iPhone notch with `env(safe-area-inset-*)`.

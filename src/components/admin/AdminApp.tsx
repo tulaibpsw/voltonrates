@@ -8,9 +8,10 @@ import { api, ApiError } from "./api";
 import { LoginForm } from "./LoginForm";
 import { RatesEditor } from "./RatesEditor";
 import { RateForm } from "./RateForm";
+import { NoticePanel } from "./NoticePanel";
 import { SettingsForm } from "./SettingsForm";
 
-type Tab = "rates" | "add" | "settings";
+type Tab = "rates" | "add" | "notice" | "settings";
 
 export function AdminApp() {
   const [board, setBoard] = useState<BoardPayload | null>(null);
@@ -32,7 +33,12 @@ export function AdminApp() {
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(load, 0);
+    const t = setTimeout(() => {
+      // Home-screen shortcut "Send a notice" opens /admin?tab=notice
+      const wanted = new URLSearchParams(window.location.search).get("tab");
+      if (wanted === "rates" || wanted === "add" || wanted === "notice" || wanted === "settings") setTab(wanted);
+      void load();
+    }, 0);
     return () => clearTimeout(t);
   }, [load]);
 
@@ -76,18 +82,19 @@ export function AdminApp() {
         </div>
       }
     >
-      <nav className="sticky top-0 z-10 grid grid-cols-3 gap-1 border-b border-edge bg-surface p-2">
+      <nav className="sticky top-0 z-10 grid grid-cols-4 gap-1 border-b border-edge bg-surface p-2">
         {(
           [
             ["rates", "Rates"],
-            ["add", "Add item"],
-            ["settings", "Screen"],
-          ] as const
+            ["add", "Add"],
+            ["notice", board.notice ? "📢 Notice •" : "📢 Notice"],
+            ["settings", "Settings"],
+          ] as [Tab, string][]
         ).map(([id, label]) => (
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`min-h-12 rounded-xl text-base font-bold ${tab === id ? "bg-fg text-bg" : "text-fg hover:bg-surface-2"}`}
+            className={`min-h-12 rounded-xl text-sm font-bold sm:text-base ${tab === id ? "bg-fg text-bg" : "text-fg hover:bg-surface-2"}`}
           >
             {label}
           </button>
@@ -114,6 +121,9 @@ export function AdminApp() {
               setTab("rates");
             }}
           />
+        )}
+        {tab === "notice" && (
+          <NoticePanel notice={board.notice} onChanged={load} onError={onError} onSaved={flash} />
         )}
         {tab === "settings" && (
           <SettingsForm
@@ -165,7 +175,7 @@ function Shell({ children, right }: { children: React.ReactNode; right?: React.R
   const { theme, toggle } = useAdminTheme();
   return (
     <div data-theme={theme} className="min-h-dvh bg-bg text-fg">
-      <header className="flex items-center justify-between gap-2 border-b border-edge bg-surface px-3 py-2">
+      <header className="flex items-center justify-between gap-2 border-b border-edge bg-surface px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2">
         <div className="flex items-center gap-2">
           <BrandLogo height={44} priority />
           <span className="rounded-md bg-gold px-2 py-0.5 text-xs font-extrabold text-ink">ADMIN</span>

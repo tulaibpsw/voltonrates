@@ -39,3 +39,15 @@ npm run dev                  # terminal 2: http://localhost:3200
 - Vercel Hobby is meant for non-commercial use; for a business, Vercel Pro is the proper plan (phase 2 talk).
 - Atlas M0 has no automatic backups.
 - Pusher Sandbox: 100 screens connected at the same time — far more than one office needs.
+
+## Notices
+
+Admin → **📢 Notice**: send a message ("Everyone, please come to my office"), a picture, or a video.
+It covers every screen full screen for 1 min … 1 hour, or until you press **Remove notice now**.
+Pictures/videos upload to Cloudinary (add the `CLOUDINARY_*` keys — the same free account as the CRM),
+or you can paste an `https://` link.
+
+## Install on iPhone
+
+Open `https://<your-app>.vercel.app/admin` in **Safari** → Share button → **Add to Home Screen**.
+It opens full screen like an app with the Volt On icon. (On Android Chrome: menu → Install app.)

@@ -16,19 +16,28 @@ export function useLiveBoard() {
   const [board, setBoard] = useState<BoardPayload | null>(null);
   const [status, setStatus] = useState<LiveStatus>("connecting");
   const [error, setError] = useState<string | null>(null);
+  const [clockOffsetMs, setClockOffsetMs] = useState(0); // server clock minus this TV's clock
   const versionRef = useRef(-1);
   const inFlight = useRef(false);
+  const again = useRef(false);
 
   const refresh = useCallback(async () => {
-    if (inFlight.current) return;
+    if (inFlight.current) {
+      again.current = true; // a change arrived mid-fetch: fetch once more after this one
+      return;
+    }
     inFlight.current = true;
     try {
-      const res = await fetch("/api/rates", { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Could not load rates");
-      versionRef.current = data.version;
-      setBoard(data);
-      setError(null);
+      do {
+        again.current = false;
+        const res = await fetch("/api/rates", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "Could not load rates");
+        versionRef.current = data.version;
+        setBoard(data);
+        setClockOffsetMs(Date.parse(data.serverTime) - Date.now());
+        setError(null);
+      } while (again.current);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load rates");
     } finally {
@@ -98,5 +107,5 @@ export function useLiveBoard() {
     };
   }, [refresh]);
 
-  return { board, status, error, refresh };
+  return { board, status, error, refresh, clockOffsetMs };
 }

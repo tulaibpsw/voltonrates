@@ -155,3 +155,36 @@ body {
     @apply min-h-11 rounded-lg border border-edge px-3 font-semibold disabled:opacity-40;
   }
 }
+
+/* Notice: fades in, and the NOTICE badge pulses so people look up. */
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.notice-in {
+  animation: notice-in 0.5s ease-out;
+}
+@keyframes notice-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold) 60%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 1.4vw transparent;
+  }
+}
+.notice-pulse {
+  animation: notice-pulse 1.8s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .notice-in,
+  .notice-pulse {
+    animation: none;
+  }
+}

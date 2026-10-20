@@ -138,7 +138,7 @@ export function RatesEditor({ board, onChanged, onError, onSaved }: Props) {
       ))}
 
       {dirtyIds.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-edge bg-surface p-3 shadow-brand">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-edge bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-brand">
           <div className="mx-auto flex max-w-3xl gap-2">
             <button className="btn-ghost-dark min-h-14 flex-1" disabled={busy} onClick={() => setDrafts({})}>
               Undo
