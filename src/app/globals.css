@@ -1,41 +1,98 @@
 @import "tailwindcss";
 
-/* Volt On Solar brand (from voltonsolar.com) */
+/*
+ * Volt On brand palette — same values as voltonsolar.com (app/globals.css) and the Volt On CRM:
+ * gold #f7b500, ink navy #0c1a2b / #07111f / #14263d, leaf green #2da772, mist #f5f7f9 / #e9eef3, sand #f8f1de.
+ * Components use only the semantic tokens below (bg, surface, fg, ...), so Day and Night swap in one place.
+ */
 :root {
   --gold: #f7b500;
+  --gold-400: #ffcb3d;
   --ink: #0c1a2b;
-  --ink-2: #13253b;
-  --ink-3: #1c3350;
+  --ink-950: #07111f;
+  --ink-800: #14263d;
   --leaf: #2da772;
-  --danger: #e5484d;
-  --paper: #f5f7fa;
-  --line: #d9e0e8;
-  --muted: #5d6b7c;
+  --mist-50: #f5f7f9;
+  --mist-100: #e9eef3;
+  --sand-100: #f8f1de;
+}
+
+/* Day: website light sections — mist page, white cards, navy text, gold accents. */
+:root,
+[data-theme="day"] {
+  --bg: var(--mist-50);
+  --surface: #ffffff;
+  --surface-2: var(--mist-100);
+  --fg: var(--ink);
+  --fg-soft: #536273;
+  --edge: rgba(12, 26, 43, 0.1);
+  --price: var(--ink);
+  --accent-text: #8a6200; /* gold darkened for readable text on white */
+  --up: #1d8a5a;
+  --up-soft: #dff7ea;
+  --down: #c8372d;
+  --down-soft: #fde8e6;
+  --flash: color-mix(in srgb, var(--gold) 35%, transparent);
+  --shadow: 0 24px 60px rgba(8, 20, 35, 0.08);
+}
+
+/* Night: website hero / navbar — deep navy, gold prices. */
+[data-theme="night"] {
+  --bg: var(--ink-950);
+  --surface: var(--ink);
+  --surface-2: var(--ink-800);
+  --fg: #ffffff;
+  --fg-soft: rgba(255, 255, 255, 0.66);
+  --edge: rgba(255, 255, 255, 0.1);
+  --price: var(--gold);
+  --accent-text: var(--gold);
+  --up: var(--leaf);
+  --up-soft: rgba(45, 167, 114, 0.18);
+  --down: #ff6b61;
+  --down-soft: rgba(255, 107, 97, 0.16);
+  --flash: color-mix(in srgb, var(--gold) 30%, transparent);
+  --shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
 }
 
 @theme inline {
   --color-gold: var(--gold);
   --color-ink: var(--ink);
-  --color-ink-2: var(--ink-2);
-  --color-ink-3: var(--ink-3);
   --color-leaf: var(--leaf);
-  --color-danger: var(--danger);
-  --color-paper: var(--paper);
-  --color-line: var(--line);
-  --color-muted: var(--muted);
+  --color-sand: var(--sand-100);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-fg-soft: var(--fg-soft);
+  --color-edge: var(--edge);
+  --color-price: var(--price);
+  --color-accent-text: var(--accent-text);
+  --color-up: var(--up);
+  --color-up-soft: var(--up-soft);
+  --color-down: var(--down);
+  --color-down-soft: var(--down-soft);
+  --shadow-brand: var(--shadow);
   --font-sans: var(--font-manrope);
   --font-display: var(--font-sora);
 }
 
 body {
   font-family: var(--font-manrope), system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* The logo comes in two files: black text for Day, white text for Night. */
+[data-theme="night"] .logo-day,
+[data-theme="day"] .logo-night {
+  display: none;
 }
 
 /* A price that just changed glows for a few seconds so the team notices it. */
 @keyframes price-flash {
   0%,
   30% {
-    background-color: color-mix(in srgb, var(--gold) 40%, transparent);
+    background-color: var(--flash);
   }
   100% {
     background-color: transparent;
@@ -77,24 +134,24 @@ body {
 /* Admin controls: main buttons 56px, nothing under 44px (easy on phones). */
 @layer components {
   .label {
-    @apply mb-1 block text-sm font-bold text-ink;
+    @apply mb-1 block text-sm font-bold text-fg;
   }
   .input {
-    @apply min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink outline-none focus:border-gold focus:ring-2 focus:ring-gold/40;
+    @apply min-h-12 w-full rounded-xl border border-edge bg-surface px-3 text-base text-fg outline-none focus:border-gold focus:ring-2 focus:ring-gold/40;
   }
   .btn-primary {
     @apply inline-flex min-h-12 items-center justify-center rounded-xl bg-gold px-4 font-display text-base font-extrabold text-ink active:scale-[0.98] disabled:opacity-40;
   }
   .btn-ghost {
-    @apply inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-white/90 hover:bg-white/10;
+    @apply inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-fg hover:bg-surface-2;
   }
   .btn-ghost-dark {
-    @apply inline-flex min-h-12 items-center justify-center rounded-xl border border-line bg-white px-4 font-bold text-ink disabled:opacity-40;
+    @apply inline-flex min-h-12 items-center justify-center rounded-xl border border-edge bg-surface px-4 font-bold text-fg disabled:opacity-40;
   }
   .btn-step {
-    @apply grid min-h-14 w-14 shrink-0 place-items-center rounded-xl bg-paper font-display text-2xl font-black text-ink active:bg-line disabled:opacity-40;
+    @apply grid min-h-14 w-14 shrink-0 place-items-center rounded-xl bg-surface-2 font-display text-2xl font-black text-fg active:bg-edge disabled:opacity-40;
   }
   .btn-chip {
-    @apply min-h-11 rounded-lg border border-line px-3 font-semibold disabled:opacity-40;
+    @apply min-h-11 rounded-lg border border-edge px-3 font-semibold disabled:opacity-40;
   }
 }

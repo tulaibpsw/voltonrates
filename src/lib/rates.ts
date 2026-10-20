@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: BoardSettings = {
   subtitle: "Today's Market Rates",
   ticker: "Rates are subject to change. Please confirm with the sales team before booking.",
   categoryOrder: DEFAULT_CATEGORIES,
+  theme: "auto",
 };
 
 async function collections() {

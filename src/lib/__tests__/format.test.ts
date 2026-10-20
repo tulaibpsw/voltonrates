@@ -23,3 +23,16 @@ describe("format", () => {
     expect(timeAgo(null, now)).toBe("");
   });
 });
+
+import { resolveTheme } from "../theme";
+describe("resolveTheme", () => {
+  it("auto is Day from 7 AM to 6 PM, Night otherwise", () => {
+    expect(resolveTheme("auto", new Date(2026, 0, 1, 7, 0))).toBe("day");
+    expect(resolveTheme("auto", new Date(2026, 0, 1, 17, 59))).toBe("day");
+    expect(resolveTheme("auto", new Date(2026, 0, 1, 18, 0))).toBe("night");
+    expect(resolveTheme("auto", new Date(2026, 0, 1, 2, 0))).toBe("night");
+  });
+  it("a fixed choice wins", () => {
+    expect(resolveTheme("day", new Date(2026, 0, 1, 23, 0))).toBe("day");
+  });
+});

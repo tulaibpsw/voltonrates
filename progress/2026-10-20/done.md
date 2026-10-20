@@ -11,3 +11,13 @@
 - Fixed: a price-only save was wiping model/spec (zod defaults in the update schema). Test added.
 - Checks: `tsc`, `eslint`, `next build` pass; 7 unit tests pass; API smoke test (wrong password 401,
   no login 401, other-site request 403, update + add work); board picked up changes in the browser.
+
+## Later the same day — brand theme
+- Real Volt On logo from voltonsolar.com (black text for Day, white for Night) on the board and admin.
+- Day and Night themes from the shared Volt On palette (website + CRM): gold #f7b500, ink #0c1a2b/#07111f/#14263d,
+  leaf #2da772, mist #f5f7f9/#e9eef3. All colours are semantic tokens in globals.css.
+- Board theme: admin chooses Auto (Day 7 AM–6 PM) / Day / Night for all screens; each screen also has a
+  Day / Night / Auto button (remembered on that TV), and `?theme=day|night` works in the URL.
+- Admin panel has its own Day/Night button (remembered on the phone, defaults to the phone setting).
+- Favicon + Apple icon: the logo's "O + bolt" mark on a navy tile (`src/app/icon.png`, `favicon.ico`, `apple-icon.png`).
+- Checks: tsc, eslint, build pass; 9 unit tests pass; both themes checked in the browser.

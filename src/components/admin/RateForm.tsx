@@ -49,7 +49,7 @@ export function RateForm({ rate, categories, onSaved, onError, onCancel }: Props
   }
 
   return (
-    <form onSubmit={submit} className={`space-y-4 ${rate ? "" : "rounded-2xl bg-white p-5 shadow-sm"}`}>
+    <form onSubmit={submit} className={`space-y-4 ${rate ? "" : "rounded-2xl bg-surface p-5 shadow-sm"}`}>
       {!rate && <h2 className="font-display text-xl font-extrabold">Add a new item</h2>}
 
       <label className="block">

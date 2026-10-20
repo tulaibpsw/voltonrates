@@ -23,9 +23,9 @@ export function LoginForm({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="mx-4 mt-10 max-w-sm space-y-4 sm:mx-auto rounded-2xl bg-white p-6 shadow-sm">
+    <form onSubmit={submit} className="mx-4 mt-10 max-w-sm space-y-4 sm:mx-auto rounded-2xl bg-surface p-6 shadow-sm">
       <h1 className="font-display text-2xl font-extrabold">Admin login</h1>
-      <p className="text-sm text-muted">Only the owner can change rates.</p>
+      <p className="text-sm text-fg-soft">Only the owner can change rates.</p>
       <label className="block">
         <span className="label">Password</span>
         <input
@@ -38,7 +38,7 @@ export function LoginForm({ onDone }: { onDone: () => void }) {
           required
         />
       </label>
-      {error && <p className="text-sm font-semibold text-danger">{error}</p>}
+      {error && <p className="text-sm font-semibold text-down">{error}</p>}
       <button className="btn-primary w-full" disabled={busy}>{busy ? "Checking..." : "Log in"}</button>
     </form>
   );

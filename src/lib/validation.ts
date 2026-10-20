@@ -33,6 +33,7 @@ export const settingsSchema = z.object({
   subtitle: z.string().trim().max(120).default(""),
   ticker: z.string().trim().max(500).default(""),
   categoryOrder: z.array(z.string().trim().min(1).max(60)).max(30).default([]),
+  theme: z.enum(["auto", "day", "night"]).default("auto"),
 });
 
 export const loginSchema = z.object({ password: z.string().min(1).max(200) });

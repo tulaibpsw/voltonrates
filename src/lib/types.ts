@@ -26,7 +26,10 @@ export interface Rate {
   updatedAt: string;
 }
 
+export type ThemeMode = "auto" | "day" | "night";
+
 export interface BoardSettings {
+  theme: ThemeMode; // auto = Day 7 AM–6 PM, Night otherwise (the TV's own clock)
   title: string;
   subtitle: string;
   ticker: string;

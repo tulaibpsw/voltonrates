@@ -86,7 +86,7 @@ export function RatesEditor({ board, onChanged, onError, onSaved }: Props) {
   }
 
   if (board.rates.length === 0) {
-    return <p className="rounded-2xl bg-white p-6 text-muted">No items yet. Open the “Add item” tab to add the first one.</p>;
+    return <p className="rounded-2xl bg-surface p-6 text-fg-soft">No items yet. Open the “Add item” tab to add the first one.</p>;
   }
 
   return (
@@ -104,7 +104,7 @@ export function RatesEditor({ board, onChanged, onError, onSaved }: Props) {
           <ul className="space-y-3">
             {g.rates.map((r) =>
               editing === r.id ? (
-                <li key={r.id} className="rounded-2xl bg-white p-4 shadow-sm">
+                <li key={r.id} className="rounded-2xl bg-surface p-4 shadow-sm">
                   <RateForm
                     rate={r}
                     categories={categories}
@@ -138,7 +138,7 @@ export function RatesEditor({ board, onChanged, onError, onSaved }: Props) {
       ))}
 
       {dirtyIds.length > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-edge bg-surface p-3 shadow-brand">
           <div className="mx-auto flex max-w-3xl gap-2">
             <button className="btn-ghost-dark min-h-14 flex-1" disabled={busy} onClick={() => setDrafts({})}>
               Undo
@@ -175,21 +175,21 @@ function RateCard(props: {
   };
 
   return (
-    <li className={`rounded-2xl bg-white p-4 shadow-sm ${rate.active ? "" : "opacity-60"} ${dirty ? "ring-2 ring-gold" : ""}`}>
+    <li className={`rounded-2xl bg-surface p-4 shadow-sm ${rate.active ? "" : "opacity-60"} ${dirty ? "ring-2 ring-gold" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-display font-extrabold">
-            {rate.brand} <span className="font-semibold text-muted">{rate.model}</span>
+            {rate.brand} <span className="font-semibold text-fg-soft">{rate.model}</span>
           </p>
-          <p className="text-sm text-muted">
+          <p className="text-sm text-fg-soft">
             {[rate.spec, UNIT_LABEL[rate.unit].replace("/ ", "per "), !rate.active && "Hidden from screen", !rate.inStock && "Out of stock"]
               .filter(Boolean)
               .join(" • ")}
           </p>
-          <p className="mt-1 text-xs text-muted">
+          <p className="mt-1 text-xs text-fg-soft">
             Now Rs {formatPrice(rate.price)}
             {change !== 0 && (
-              <span className={change > 0 ? "text-leaf" : "text-danger"}>
+              <span className={change > 0 ? "text-up" : "text-down"}>
                 {" "}({change > 0 ? "+" : "−"}{formatPrice(Math.abs(change))})
               </span>
             )}{" "}
@@ -202,7 +202,7 @@ function RateCard(props: {
         <button className="btn-step" onClick={() => bump(-step)} aria-label={`Lower by ${step}`} disabled={busy}>−</button>
         <label className="relative flex-1">
           <span className="sr-only">New price for {rate.brand} {rate.model}</span>
-          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-bold text-muted">Rs</span>
+          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-bold text-fg-soft">Rs</span>
           <input
             inputMode="decimal"
             className="input h-14 pl-10 text-center font-display text-2xl font-extrabold tabular-nums"
@@ -223,7 +223,7 @@ function RateCard(props: {
           {rate.inStock ? "Mark out of stock" : "Mark in stock"}
         </button>
         <button className="btn-chip" disabled={busy} onClick={props.onEdit}>Edit</button>
-        <button className="btn-chip text-danger" disabled={busy} onClick={props.onDelete}>Delete</button>
+        <button className="btn-chip text-down" disabled={busy} onClick={props.onDelete}>Delete</button>
       </div>
     </li>
   );

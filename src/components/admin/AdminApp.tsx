@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { Theme } from "@/lib/theme";
 import type { BoardPayload } from "@/lib/types";
+import { BrandLogo } from "../BrandLogo";
 import { api, ApiError } from "./api";
 import { LoginForm } from "./LoginForm";
 import { RatesEditor } from "./RatesEditor";
@@ -51,13 +53,13 @@ export function AdminApp() {
     setState("login");
   }
 
-  if (state === "loading") return <Shell><p className="p-6 text-muted">Loading...</p></Shell>;
+  if (state === "loading") return <Shell><p className="p-6 text-fg-soft">Loading...</p></Shell>;
   if (state === "login") return <Shell><LoginForm onDone={() => { setMessage(null); void load(); }} /></Shell>;
   if (state === "error" || !board)
     return (
       <Shell>
         <div className="space-y-4 p-6">
-          <p className="text-danger">{message}</p>
+          <p className="text-down">{message}</p>
           <button className="btn-primary" onClick={() => void load()}>Try again</button>
         </div>
       </Shell>
@@ -69,12 +71,12 @@ export function AdminApp() {
     <Shell
       right={
         <div className="flex items-center gap-2">
-          <a href="/" target="_blank" className="btn-ghost">Open screen</a>
+          <a href="/" target="_blank" className="btn-ghost">Screen</a>
           <button className="btn-ghost" onClick={() => void logout()}>Log out</button>
         </div>
       }
     >
-      <nav className="sticky top-0 z-10 grid grid-cols-3 gap-1 border-b border-line bg-white p-2">
+      <nav className="sticky top-0 z-10 grid grid-cols-3 gap-1 border-b border-edge bg-surface p-2">
         {(
           [
             ["rates", "Rates"],
@@ -85,7 +87,7 @@ export function AdminApp() {
           <button
             key={id}
             onClick={() => setTab(id)}
-            className={`min-h-12 rounded-xl text-base font-bold ${tab === id ? "bg-ink text-white" : "text-ink hover:bg-paper"}`}
+            className={`min-h-12 rounded-xl text-base font-bold ${tab === id ? "bg-fg text-bg" : "text-fg hover:bg-surface-2"}`}
           >
             {label}
           </button>
@@ -93,7 +95,7 @@ export function AdminApp() {
       </nav>
 
       {message && (
-        <p role="status" className="mx-4 mt-4 rounded-xl bg-ink px-4 py-3 text-sm font-semibold text-white">
+        <p role="status" className="mx-4 mt-4 rounded-xl bg-fg px-4 py-3 text-sm font-semibold text-bg">
           {message}
         </p>
       )}
@@ -128,18 +130,57 @@ export function AdminApp() {
   );
 }
 
+const ADMIN_THEME_KEY = "vr-admin-theme";
+
+/** The admin panel's own Day/Night choice, remembered on this phone. Defaults to the phone's setting. */
+function useAdminTheme() {
+  const [theme, setTheme] = useState<Theme>("day");
+  useEffect(() => {
+    const t = setTimeout(() => {
+      let saved: string | null = null;
+      try {
+        saved = localStorage.getItem(ADMIN_THEME_KEY);
+      } catch {
+        /* storage blocked */
+      }
+      if (saved === "day" || saved === "night") setTheme(saved);
+      else if (window.matchMedia("(prefers-color-scheme: dark)").matches) setTheme("night");
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
+  const toggle = () =>
+    setTheme((cur) => {
+      const next = cur === "day" ? "night" : "day";
+      try {
+        localStorage.setItem(ADMIN_THEME_KEY, next);
+      } catch {
+        /* storage blocked */
+      }
+      return next;
+    });
+  return { theme, toggle };
+}
+
 function Shell({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
+  const { theme, toggle } = useAdminTheme();
   return (
-    <div className="min-h-dvh bg-paper text-ink">
-      <header className="flex items-center justify-between gap-3 bg-ink px-4 py-3 text-white">
+    <div data-theme={theme} className="min-h-dvh bg-bg text-fg">
+      <header className="flex items-center justify-between gap-2 border-b border-edge bg-surface px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-lg bg-gold font-display text-lg font-black text-ink">⚡</span>
-          <div className="leading-tight">
-            <p className="font-display font-extrabold">Volt On Rates</p>
-            <p className="text-xs text-white/60">Admin</p>
-          </div>
+          <BrandLogo height={44} priority />
+          <span className="rounded-md bg-gold px-2 py-0.5 text-xs font-extrabold text-ink">ADMIN</span>
         </div>
-        {right}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={toggle}
+            className="btn-ghost"
+            aria-label={theme === "day" ? "Switch to night theme" : "Switch to day theme"}
+          >
+            {theme === "day" ? "🌙 Night" : "☀️ Day"}
+          </button>
+          {right}
+        </div>
       </header>
       <main className="mx-auto max-w-3xl">{children}</main>
     </div>

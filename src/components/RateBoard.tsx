@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatPrice, groupByCategory, priceChange, timeAgo } from "@/lib/format";
-import { UNIT_LABEL, type Rate } from "@/lib/types";
+import { parseThemeMode, resolveTheme } from "@/lib/theme";
+import { UNIT_LABEL, type Rate, type ThemeMode } from "@/lib/types";
+import { BrandLogo } from "./BrandLogo";
 import { useLiveBoard, type LiveStatus } from "./useLiveBoard";
 
 const FLASH_MS = 8000;
@@ -14,6 +16,8 @@ export function RateBoard() {
   const scrollRef = useAutoScroll();
   const controlsVisible = useIdleControls();
   useWakeLock();
+  const screenTheme = useScreenTheme();
+  const theme = resolveTheme(screenTheme.mode ?? board?.settings.theme ?? "auto", now);
 
   const groups = useMemo(
     () => (board ? groupByCategory(board.rates, board.settings.categoryOrder) : []),
@@ -26,28 +30,32 @@ export function RateBoard() {
 
   return (
     <div
-      className={`flex h-dvh flex-col overflow-hidden bg-ink text-white ${controlsVisible ? "" : "cursor-none"}`}
+      data-theme={theme}
+      className={`flex h-dvh flex-col overflow-hidden bg-bg text-fg ${controlsVisible ? "" : "cursor-none"}`}
     >
-      <header className="flex items-center justify-between gap-6 border-b border-white/10 bg-ink-2 px-[3vw] py-[1.6vh]">
-        <div className="flex items-center gap-[1.2vw]">
-          <Bolt />
-          <div>
+      <header className="flex items-center justify-between gap-6 border-b border-edge bg-surface px-[3vw] shadow-brand py-[1.6vh]">
+        <div className="flex items-center gap-[1.6vw]">
+          <BrandLogo height="clamp(3.2rem, 6.5vw, 9rem)" priority />
+          <div className="border-l-4 border-gold pl-[1.4vw]">
             <h1 className="font-display text-[clamp(1.5rem,2.6vw,3.6rem)] leading-tight font-extrabold tracking-tight">
               {board?.settings.title ?? "Volt On Solar"}
             </h1>
-            <p className="text-[clamp(0.9rem,1.25vw,1.8rem)] font-semibold text-gold">
+            <p className="text-[clamp(0.9rem,1.25vw,1.8rem)] font-semibold text-accent-text">
               {board?.settings.subtitle ?? "Today's Market Rates"}
             </p>
           </div>
         </div>
+        <div className="flex items-center gap-[2vw]">
+        <ThemeSwitch mode={screenTheme.mode} onChoose={screenTheme.choose} />
         <div className="text-right">
           <p className="font-display text-[clamp(1.4rem,2.4vw,3.4rem)] leading-none font-bold tabular-nums">
             {now ? now.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "--:--"}
           </p>
-          <p className="mt-1 text-[clamp(0.8rem,1vw,1.4rem)] text-white/70">
+          <p className="mt-1 text-[clamp(0.8rem,1vw,1.4rem)] text-fg-soft">
             {now?.toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>
           <StatusPill status={status} hasError={Boolean(error)} />
+        </div>
         </div>
       </header>
 
@@ -57,12 +65,12 @@ export function RateBoard() {
         {board && groups.length === 0 && <CenterNote text="No rates yet. The admin can add them from /admin." />}
         <div className="grid gap-[2vh] lg:grid-cols-2 lg:gap-x-[2vw]">
           {groups.map((g) => (
-            <section key={g.category} className="overflow-hidden rounded-2xl border border-white/10 bg-ink-2">
+            <section key={g.category} className="overflow-hidden rounded-2xl border border-edge bg-surface shadow-brand">
               <h2 className="flex items-center justify-between bg-gold px-[1.4vw] py-[0.9vh] font-display text-[clamp(1.05rem,1.5vw,2.2rem)] font-extrabold text-ink uppercase">
                 <span>{g.category}</span>
                 <span className="text-[0.65em] font-bold opacity-70">Rs</span>
               </h2>
-              <ul className="divide-y divide-white/10">
+              <ul className="divide-y divide-edge">
                 {g.rates.map((r) => (
                   <RateRow key={r.id} rate={r} flash={flashing.has(r.id)} now={now?.getTime()} />
                 ))}
@@ -72,7 +80,7 @@ export function RateBoard() {
         </div>
       </main>
 
-      <footer className="flex items-center gap-4 border-t border-white/10 bg-ink-2 text-[clamp(0.85rem,1.1vw,1.6rem)]">
+      <footer className="flex items-center gap-4 border-t border-edge bg-surface text-[clamp(0.85rem,1.1vw,1.6rem)]">
         <div className="shrink-0 bg-leaf px-[1.4vw] py-[1vh] font-bold whitespace-nowrap text-ink">
           Updated {timeAgo(lastChange, now?.getTime())}
         </div>
@@ -98,9 +106,9 @@ function RateRow({ rate, flash, now }: { rate: Rate; flash: boolean; now?: numbe
     >
       <div className="min-w-0">
         <p className="truncate font-display text-[clamp(1rem,1.45vw,2.1rem)] font-bold">
-          {rate.brand} <span className="font-semibold text-white/80">{rate.model}</span>
+          {rate.brand} <span className="font-semibold text-fg-soft">{rate.model}</span>
         </p>
-        <p className="truncate text-[clamp(0.75rem,0.95vw,1.35rem)] text-white/60">
+        <p className="truncate text-[clamp(0.75rem,0.95vw,1.35rem)] text-fg-soft">
           {[rate.spec, rate.inStock ? null : "Out of stock", flash ? "Just updated" : null]
             .filter(Boolean)
             .join("  •  ") || " "}
@@ -109,8 +117,8 @@ function RateRow({ rate, flash, now }: { rate: Rate; flash: boolean; now?: numbe
       <div className="flex shrink-0 items-center gap-[1vw]">
         {change !== 0 && <ChangeBadge change={change} title={timeAgo(rate.priceChangedAt, now)} />}
         <p className="text-right font-display leading-none tabular-nums">
-          <span className="text-[clamp(1.4rem,2.3vw,3.4rem)] font-extrabold text-gold">{formatPrice(rate.price)}</span>
-          <span className="ml-1 text-[clamp(0.7rem,0.9vw,1.3rem)] font-semibold text-white/60">
+          <span className="text-[clamp(1.4rem,2.3vw,3.4rem)] font-extrabold text-price">{formatPrice(rate.price)}</span>
+          <span className="ml-1 text-[clamp(0.7rem,0.9vw,1.3rem)] font-semibold text-fg-soft">
             {UNIT_LABEL[rate.unit]}
           </span>
         </p>
@@ -124,7 +132,7 @@ function ChangeBadge({ change, title }: { change: number; title: string }) {
   return (
     <span
       title={title}
-      className={`rounded-lg px-[0.6vw] py-[0.3vh] text-[clamp(0.8rem,1.05vw,1.5rem)] font-bold tabular-nums ${up ? "bg-leaf/20 text-leaf" : "bg-danger/20 text-danger"}`}
+      className={`rounded-lg px-[0.6vw] py-[0.3vh] text-[clamp(0.8rem,1.05vw,1.5rem)] font-bold tabular-nums ${up ? "bg-up-soft text-up" : "bg-down-soft text-down"}`}
     >
       {up ? "▲" : "▼"} {formatPrice(Math.abs(change))}
     </span>
@@ -133,9 +141,9 @@ function ChangeBadge({ change, title }: { change: number; title: string }) {
 
 function StatusPill({ status, hasError }: { status: LiveStatus; hasError: boolean }) {
   const label = hasError ? "Reconnecting" : { connecting: "Connecting", live: "Live", polling: "Auto refresh", offline: "Offline" }[status];
-  const color = hasError || status === "offline" ? "bg-danger" : status === "live" ? "bg-leaf" : "bg-gold";
+  const color = hasError || status === "offline" ? "bg-down" : status === "live" ? "bg-leaf" : "bg-gold";
   return (
-    <p className="mt-1 inline-flex items-center gap-2 text-[clamp(0.75rem,0.9vw,1.25rem)] font-semibold text-white/80">
+    <p className="mt-1 inline-flex items-center gap-2 text-[clamp(0.75rem,0.9vw,1.25rem)] font-semibold text-fg-soft">
       <span className={`live-dot inline-block size-[0.8em] rounded-full ${color}`} />
       {label}
     </p>
@@ -156,15 +164,65 @@ function Ticker({ text }: { text: string }) {
 }
 
 function CenterNote({ text }: { text: string }) {
-  return <p className="py-[20vh] text-center text-[clamp(1.2rem,2vw,2.6rem)] text-white/70">{text}</p>;
+  return <p className="py-[20vh] text-center text-[clamp(1.2rem,2vw,2.6rem)] text-fg-soft">{text}</p>;
 }
 
-function Bolt() {
+const SCREEN_THEME_KEY = "vr-screen-theme";
+
+/**
+ * This screen's own theme choice: from ?theme=day|night in the URL, or the Day/Night button
+ * (remembered on this TV). Null = follow the admin's setting.
+ */
+function useScreenTheme() {
+  const [mode, setMode] = useState<ThemeMode | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      let saved: string | null = null;
+      try {
+        saved = localStorage.getItem(SCREEN_THEME_KEY);
+      } catch {
+        /* storage blocked */
+      }
+      const fromUrl = parseThemeMode(new URLSearchParams(window.location.search).get("theme"));
+      const chosen = fromUrl ?? parseThemeMode(saved);
+      setMode(chosen === "auto" ? null : chosen);
+    }, 0);
+    return () => clearTimeout(t);
+  }, []);
+  const choose = (next: ThemeMode) => {
+    setMode(next === "auto" ? null : next);
+    try {
+      if (next === "auto") localStorage.removeItem(SCREEN_THEME_KEY);
+      else localStorage.setItem(SCREEN_THEME_KEY, next);
+    } catch {
+      /* storage blocked: the choice lasts until the page reloads */
+    }
+  };
+  return { mode, choose };
+}
+
+function ThemeSwitch({ mode, onChoose }: { mode: ThemeMode | null; onChoose: (m: ThemeMode) => void }) {
+  const options: { id: ThemeMode; label: string; title: string }[] = [
+    { id: "day", label: "☀️ Day", title: "Light theme on this screen" },
+    { id: "night", label: "🌙 Night", title: "Dark theme on this screen" },
+    { id: "auto", label: "Auto", title: "Follow the admin setting" },
+  ];
+  const current = mode ?? "auto";
   return (
-    <svg viewBox="0 0 24 24" aria-hidden className="size-[clamp(2.4rem,4vw,5.5rem)] shrink-0">
-      <rect width="24" height="24" rx="6" fill="var(--gold)" />
-      <path d="M13.5 3 6 13.2h5l-1 7.8 7.5-10.4h-5.1L13.5 3Z" fill="var(--ink)" />
-    </svg>
+    <div role="group" aria-label="Screen theme" className="inline-flex rounded-full border border-edge bg-surface-2 p-1">
+      {options.map((o) => (
+        <button
+          key={o.id}
+          type="button"
+          title={o.title}
+          aria-pressed={current === o.id}
+          onClick={() => onChoose(o.id)}
+          className={`min-h-11 rounded-full px-3 text-[clamp(0.8rem,0.9vw,1.2rem)] font-bold whitespace-nowrap transition-colors ${current === o.id ? "bg-gold text-ink" : "text-fg-soft hover:text-fg"}`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
   );
 }
 

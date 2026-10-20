@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { BoardSettings } from "@/lib/types";
+import type { BoardSettings, ThemeMode } from "@/lib/types";
+
+const THEMES: { id: ThemeMode; label: string; hint: string }[] = [
+  { id: "auto", label: "Auto", hint: "Day 7 AM – 6 PM, Night after" },
+  { id: "day", label: "☀️ Day", hint: "Light, always" },
+  { id: "night", label: "🌙 Night", hint: "Dark, always" },
+];
 import { api } from "./api";
 
 interface Props {
@@ -15,6 +21,7 @@ export function SettingsForm({ settings, onSaved, onError }: Props) {
   const [subtitle, setSubtitle] = useState(settings.subtitle);
   const [ticker, setTicker] = useState(settings.ticker);
   const [order, setOrder] = useState(settings.categoryOrder.join("\n"));
+  const [theme, setTheme] = useState<ThemeMode>(settings.theme ?? "auto");
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -28,6 +35,7 @@ export function SettingsForm({ settings, onSaved, onError }: Props) {
           subtitle,
           ticker,
           categoryOrder: order.split("\n").map((s) => s.trim()).filter(Boolean),
+          theme,
         },
       });
       await onSaved();
@@ -39,8 +47,25 @@ export function SettingsForm({ settings, onSaved, onError }: Props) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
+    <form onSubmit={submit} className="space-y-4 rounded-2xl bg-surface p-5 shadow-sm">
       <h2 className="font-display text-xl font-extrabold">What the screen shows</h2>
+      <fieldset>
+        <legend className="label">Screen theme</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTheme(t.id)}
+              aria-pressed={theme === t.id}
+              className={`min-h-14 rounded-xl border-2 px-2 py-2 text-left ${theme === t.id ? "border-gold bg-gold/15" : "border-edge"}`}
+            >
+              <span className="block font-display font-extrabold">{t.label}</span>
+              <span className="block text-xs text-fg-soft">{t.hint}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
       <label className="block">
         <span className="label">Title</span>
         <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} required />
