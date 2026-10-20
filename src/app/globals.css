@@ -1,26 +1,100 @@
 @import "tailwindcss";
 
+/* Volt On Solar brand (from voltonsolar.com) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --gold: #f7b500;
+  --ink: #0c1a2b;
+  --ink-2: #13253b;
+  --ink-3: #1c3350;
+  --leaf: #2da772;
+  --danger: #e5484d;
+  --paper: #f5f7fa;
+  --line: #d9e0e8;
+  --muted: #5d6b7c;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-gold: var(--gold);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-leaf: var(--leaf);
+  --color-danger: var(--danger);
+  --color-paper: var(--paper);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-sora);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), system-ui, sans-serif;
+}
+
+/* A price that just changed glows for a few seconds so the team notices it. */
+@keyframes price-flash {
+  0%,
+  30% {
+    background-color: color-mix(in srgb, var(--gold) 40%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.flash {
+  animation: price-flash 8s ease-out;
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-track {
+  animation: ticker var(--ticker-duration, 40s) linear infinite;
+}
+
+@keyframes pulse-dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+.live-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash,
+  .ticker-track,
+  .live-dot {
+    animation: none;
+  }
+}
+
+/* Admin controls: main buttons 56px, nothing under 44px (easy on phones). */
+@layer components {
+  .label {
+    @apply mb-1 block text-sm font-bold text-ink;
+  }
+  .input {
+    @apply min-h-12 w-full rounded-xl border border-line bg-white px-3 text-base text-ink outline-none focus:border-gold focus:ring-2 focus:ring-gold/40;
+  }
+  .btn-primary {
+    @apply inline-flex min-h-12 items-center justify-center rounded-xl bg-gold px-4 font-display text-base font-extrabold text-ink active:scale-[0.98] disabled:opacity-40;
+  }
+  .btn-ghost {
+    @apply inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-bold text-white/90 hover:bg-white/10;
+  }
+  .btn-ghost-dark {
+    @apply inline-flex min-h-12 items-center justify-center rounded-xl border border-line bg-white px-4 font-bold text-ink disabled:opacity-40;
+  }
+  .btn-step {
+    @apply grid min-h-14 w-14 shrink-0 place-items-center rounded-xl bg-paper font-display text-2xl font-black text-ink active:bg-line disabled:opacity-40;
+  }
+  .btn-chip {
+    @apply min-h-11 rounded-lg border border-line px-3 font-semibold disabled:opacity-40;
+  }
 }

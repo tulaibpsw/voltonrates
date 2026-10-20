@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Volt On Live Rates
 
-## Getting Started
+A live solar price board for the office LCD screen.
 
-First, run the development server:
+- **`/`** — the screen. Open it on the TV browser and press **Full screen**.
+- **`/admin`** — the owner logs in on a phone and changes prices. Every screen updates at once.
+
+## How "live" works (and why there is no separate backend)
+
+Vercel cannot keep WebSocket connections open, so we do not run our own socket server.
+Instead, when the admin saves a price, the app sends a tiny "prices changed" message through
+**Pusher Channels** (free Sandbox plan: 100 screens at once, 200,000 messages a day, no card).
+Each screen then reloads the prices. If Pusher is not set up, screens refresh every 10 seconds.
+
+Everything runs on free plans: Vercel Hobby + MongoDB Atlas M0 + Pusher Sandbox.
+
+## Set up (one time)
+
+1. **MongoDB Atlas** — create a free M0 cluster, a database user, and allow access from anywhere
+   (`0.0.0.0/0`, needed for Vercel). Copy the connection string.
+2. **Pusher** — sign up at pusher.com → Channels → create app (cluster `ap2` = Mumbai, closest to Pakistan).
+   Copy `app_id`, `key`, `secret`, `cluster` from "App Keys".
+3. **Vercel** — import this GitHub repo, then add the env vars from `.env.example` in
+   Project → Settings → Environment Variables. Deploy.
+4. Open `https://<your-app>.vercel.app/api/health` — it should say `"database":"ok"` and `"realtime":"pusher"`.
+5. Open `/admin`, log in, add the products. Open `/` on the LCD.
+
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then set MONGODB_URI=mongodb://127.0.0.1:27999, ADMIN_PASSWORD, SESSION_SECRET
+npm run dev:db               # terminal 1: local test database with demo rates
+npm run dev                  # terminal 2: http://localhost:3200
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Free-plan limits to know
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Vercel Hobby is meant for non-commercial use; for a business, Vercel Pro is the proper plan (phase 2 talk).
+- Atlas M0 has no automatic backups.
+- Pusher Sandbox: 100 screens connected at the same time — far more than one office needs.
